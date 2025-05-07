@@ -1,0 +1,23 @@
+{
+    "name": "Barrion Grocery Store POS System",
+    "short_name": "POS",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#000000",
+    "theme_color": "#ffffff",
+    "icons": [
+      {
+        "src": "/static/Barrion.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/static/Barrion.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ]
+  }
+  
