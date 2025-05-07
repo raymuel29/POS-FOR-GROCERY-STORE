@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#007bff">
+  <title>Thesis System</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="manifest" href="/static/manifest.json">
+  <link rel="icon" href="/static/logo.png" type="image/png">
+
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+    
+    <div class="loading-panel">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Barrion Grocery Store Logo" class="logo">
+        <div class="loading-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <div class="security">
+        <div class="security-login-container">
+            <div class="profile-icon"></div>
+            <div class="security-header">
+                <h2>SYSTEM ACCESS<div class="cursor"></div></h2>
+                <p>IDENTITY VERIFICATION REQUIRED</p>
+            </div>
+            
+            <form class="security-form">
+                <div class="security-input-group">
+                    <i class="fas fa-user-secret"></i>
+                    <input type="text" placeholder="Username" id="login-username" required>
+                </div>
+                
+                <div class="security-input-group">
+                    <i class="fas fa-key"></i>
+                    <input type="password" placeholder="Password" id="login-password" required>
+                </div>
+                <div class="security-header">
+                    <p>CHOOSE IDENTITY ROLE REQUIRED</p>
+                </div>
+                <div class="options">
+                    <div class="security-role">
+                        <input type="radio" name="role" id="role-admin" onclick="setRole('admin')">
+                        <label>Administrator</label>
+                    </div>
+                    <div class="security-role">
+                        <input type="radio" name="role" id="role-cashier" onclick="setRole('cashier')">
+                        <label>Cashier</label>
+                    </div>
+                </div>
+                
+                <button class="login-btn" onclick="submitLogin(event)">LOGIN</button>
+                
+            </form>
+        </div>
+    </div>
+
+    <div class="point-of-sale">
+        <!-- Navbar -->
+        <div class="navbar">
+            <div class="navbar-logo">
+                <button id="menu-toggle">&#9776;</button> <!-- Menu icon -->
+                <img src="{{ url_for('static', filename='logo.png') }}">
+                <label>BARRION GROCERY STORE</label>
+                </div>
+                <div class="navbar-settings">
+                    <p>Total Sales: ₱0.00</p>
+                    <button class="icon-btn" id="calculator-toggle-btn" onclick="toggleCalculator()">🧮</button>
+
+                    <!-- Right Sidebar (Initially Hidden) -->
+                    <div class="right-user-icon" onclick="toggleUserRightSidebar()">
+                        <img src="{{ url_for('static', filename='profile.png') }}">
+                    </div>
+                </div>
+        </div>
+        <!-- Sidebar -->
+        <aside id="profile-right-sidebar" class="profile-right-sidebar">
+            <div class="profile-right-header">
+                <h3>Profile</h3>  
+            </div>
+            <hr>
+            <!-- Profile Details -->
+            <div class="profile-right-details">
+                <p><strong>Name:</strong> <span id="full-name"></span></p>
+                <p><strong>Address:</strong> <span id="address"></span></p>
+                <p><strong>Age:</strong> <span id="age"></span></p>
+                <p><strong>Birth Year:</strong> <span id="birth-year"></span></p>
+                <p><strong>Contact No.:</strong> <span id="contact-no"></span></p> <!-- NEW FIELD -->
+            </div>
+            
+            <button id="signout-link" class="icon-btn" onclick="confirmSignOut()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+        </aside>
+        <aside class="menu-sidebar">
+            <h2>MENU</h2>
+            <hr>
+            <nav>
+                <ul>
+                <li><a href="#dashboard" data-section="dashboard"><i class="fa-solid fa-chart-simple"></i> Dashboard</a></li>
+                <li><a href="#pos" data-section="pos"><i class="fa-solid fa-store"></i> POS</a></li>
+                <li><a href="#inventory" data-section="inventory"><i class="fa-solid fa-boxes-stacked"></i> Inventory</a></li>
+                <li><a href="#accounts" data-section="accounts"><i class="fa-solid fa-users"></i> Employee Info</a></li>
+                <li><a href="#sales" data-section="sales"><i class="fa-solid fa-chart-line"></i> Sales Report</a></li>
+                <li><a href="#sales-history" data-section="sales-history"><i class="fa-solid fa-briefcase"></i> Transaction History</a></li>
+                <li><a href="#working-log" data-section="working-log"><i class="fa-solid fa-business-time"></i> Employee Time Tracker</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main>
+            <div id="section-content">
+                <div id="dashboard" class="section active">
+                    
+                    <div class="dashboard-container">
+                        <div class="dash-content">
+                            <div class="summary-boxes">
+                                <div class="summary-box">
+                                    <h4>Total Sales</h4>
+                                    <p>₱<span id="totalSales">0.00</span></p>
+                                </div>
+                                <div class="summary-box">
+                                    <h4>Expenses</h4>
+                                    <p>₱<span id="totalMarket">0.00</span></p>
+                                </div>
+                                <div class="summary-box">
+                                    <h4>Profit</h4>
+                                    <p>₱<span id="totalProfit">0.00</span></p>
+                                </div>
+                            </div>
+                            
+                            <div class="bottom-row">
+                                <!-- Left: Line Chart -->
+                                <div class="chart-wrapper">
+                                    <div class="dash-head">
+                                        <div class="chart-controls">
+                                            <button onclick="loadDashboardData('daily')">Daily</button>
+                                            <button onclick="loadDashboardData('weekly')">Weekly</button>
+                                            <button onclick="loadDashboardData('monthly')">Monthly</button>
+                                            <button onclick="loadDashboardData('yearly')">Yearly</button>
+                                        </div>
+                                    </div>
+                                    <div class="chart-section">
+                                        <h3>Profit Over Time</h3>
+                                        <canvas id="profitChart"></canvas>
+                                    </div>
+                                </div>
+                            
+                                    <!-- Low Stock List -->
+                                <div class="low-stock-box">
+                                    <h3>Low Stock Products</h3>
+                                    <ul id="lowStockList">
+                                        <!-- List items dynamically inserted -->
+                                    </ul>
+                                </div>
+                            </div> 
+                        </div>
+                    </div>
+                    
+                    
+                </div>
+                
+                <div id="pos" class="section">
+                <div class="container">
+                    <!-- Left: Receipt History -->
+                    <div class="section receipt-history">
+                        <h3>Barrion Grocery Store</h3>
+                        <p><strong>Date:</strong> <span id="receipt-date"></span></p>
+                        <p><strong>Cashier:</strong> <span id="cashier-name">N/A</span></p>
+                        <p><strong>Address:</strong> <span>Brgy.Sampaloc Talisay Batangas</span></p>
+
+                        <div class="receipt-content" class="receipt-history">
+                            <!-- Receipt details will dynamically appear here -->
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Product Name</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="receipt-body">
+                                    <!-- Items will be dynamically added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                            <p><strong>Cash:</strong> ₱ <input type="number" id="cash-amount" class="cash-input" value="0" onchange="calculateChange()"></p>
+                            <p><strong>Total Amount:</strong> ₱<span id="total-amount">0.00</span></p>
+                            <p><strong>Change:</strong>₱<span id="change-amount">0.00</span></p>
+                            <div class="button">
+                            <button id="print-btn" onclick="printReceipt()">Print Receipt</button>
+                            <button id="reset-receipt" class="btn btn-warning">Cancel</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Middle: Calculator -->
+                    <div class="section calculator">
+                        <h3>Calculator</h3>
+                        <div class="calculator-display">
+                            <input type="text" id="calculator-screen" readonly>
+                        </div>
+                        <div class="calculator-buttons">
+                            <!-- Calculator buttons -->
+                            <button onclick="appendNumber(7)">7</button>
+                            <button onclick="appendNumber(8)">8</button>
+                            <button onclick="appendNumber(9)">9</button>
+                            <button onclick="setOperation('divide')">÷</button>
+                            <button onclick="appendNumber(4)">4</button>
+                            <button onclick="appendNumber(5)">5</button>
+                            <button onclick="appendNumber(6)">6</button>
+                            <button onclick="setOperation('multiply')">×</button>
+                            <button onclick="appendNumber(1)">1</button>
+                            <button onclick="appendNumber(2)">2</button>
+                            <button onclick="appendNumber(3)">3</button>
+                            <button onclick="setOperation('subtract')">−</button>
+                            <button onclick="appendNumber(0)">0</button>
+                            <button onclick="appendDecimal()">.</button>
+                            <button onclick="calculate()">=</button>
+                            <button onclick="setOperation('add')">+</button>
+                            <button onclick="clearCalculator()">C</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Product -->
+                    <div class="section product-carousel">
+                        <!-- Search Bar -->
+                        <div class="pos-search-bar">
+                            <input type="text" id="product-search" placeholder="Search for products..." onkeyup="filterProducts()">
+                        </div>
+                    
+                        <div class="page-container">
+                            <div id="product-grid" class="product-grid">
+                                {% for item in items %}
+                                    <div class="product-card"data-id="{{ item.id }}">
+                                        <img src="data:image/png;base64,{{ item.image|b64encode }}" alt="{{ item.name }}">
+                                        <h3 class="product-name">{{ item.name }}</h3>
+                                        <p class="product-price">₱{{ item.shop_price }}</p>
+                                        <p class="product-stock">Stock: {{ item.quantity }}</p>
+                                        <input type="number" class="quantity-input" value="1" min="1" max="{{ item.quantity }}">
+                                        <button class="add-button" {% if item.quantity == 0 %}disabled{% endif %}>
+                                            {{ "Out of Stock" if item.quantity == 0 else "ADD" }}
+                                        </button>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>                
+                </div>
+                
+                
+                </div>
+
+                <div id="inventory" class="section">
+                    <div class="inventory-body">
+                        <div class="product-list-container">
+                            <input type="text" id="product-inventory-search" placeholder="Search for products...">
+                            <button class="inventory-button" onclick="openCreateModal()">Add Product</button>
+                            <button id="printInventoryBtn" class="overlay-print-btn" onclick="printInventoryReceipt()">🖨️ Print Inventory</button>
+
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Image</th>
+                                        <th>Name</th>
+                                        <th>Market Price</th>
+                                        <th>Shop Price</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr>
+                                        <td>
+                                            {% if item.image %}
+                                                <img src="data:image/png;base64,{{ item.image|b64encode }}" alt="{{ item.name }}">
+                                            {% else %}
+                                                No Image
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.market_price }}</td>
+                                        <td>{{ item.shop_price }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td id="low-stock-{{ item.id }}">
+                                            {% if item.quantity <= item.low_stock_limit %}
+                                                <span style="color:red;">Low</span>
+                                            {% else %}
+                                                <span style="color:green;">High</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="action-buttons">
+                                            <button class="inventory-button-btn" onclick="openEditModal('{{ item.id }}', '{{ item.name }}', '{{ item.market_price }}', '{{ item.shop_price }}', '{{ item.quantity }}')">Edit</button>
+                                            <button class="inventory-button-btn" onclick="openStockModal('{{ item.id }}')">Add Stock</button>
+                                            <button class="inventory-button-btn" onclick="openLowStockModal('{{ item.id }}', '{{ item.low_stock_limit }}')">Set Limit</button>
+                                            <a href="/delete_item/{{ item.id }}">
+                                                <button class="delete-btn">Delete</button>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                    
+                            <!-- Create Modal -->
+                            <div id="createModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close-btn" onclick="closeCreateModal()">&times;</span>
+                                    <form class="inventory-form" id="createForm" method="POST" enctype="multipart/form-data" action="/add_item">
+                                        <h3>ADD PRODUCT</h3>
+                                        <input type="text" name="name" placeholder="Name" required>
+                                        <input type="number" step="0.01" name="market_price" placeholder="Market Price" required>
+                                        <input type="number" step="0.01" name="shop_price" placeholder="Shop Price" required>
+                                        <input type="number" name="quantity" placeholder="Quantity" required>
+                                        <input type="file" name="image">
+                                        <button class="inventory-button-process" type="submit">Add Product</button>
+                                    </form>
+                                </div>
+                            </div>
+                    
+                            <!-- Edit Modal -->
+                            <div id="editModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close-btn" onclick="closeEditModal()">&times;</span>
+                                    <form class="inventory-form" id="editForm" method="POST" enctype="multipart/form-data" action="/edit_item">
+                                        <h3>EDIT PRODUCT</h3>
+                                        <input type="hidden" name="id" id="edit-id">
+                                        <input type="text" name="name" id="edit-name" required>
+                                        <input type="number" step="0.01" name="market_price" id="edit-market-price" required>
+                                        <input type="number" step="0.01" name="shop_price" id="edit-shop-price" required>
+                                        <input type="number" name="quantity" id="edit-quantity" required>
+                                        <input type="file" name="image">
+                                        <button class="inventory-button-process" type="submit">Save Changes</button>
+                                    </form>
+                                </div>
+                            </div>
+                    
+                            <!-- Add Stock Modal -->
+                            <div id="stockModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close-btn" onclick="closeStockModal()">&times;</span>
+                                    <form class="inventory-form" id="stockForm" method="POST" action="/add_stock">
+                                        <h3>ADD STOCK</h3>
+                                        <input type="hidden" name="id" id="stock-id">
+                                        <input type="number" id="additional_stock" name="additional_stock" placeholder="Enter additional stock" min="1" required>
+                                        <button class="inventory-button-process" type="submit">Add Stock</button>
+                                    </form>
+                                </div>
+                            </div>
+                    
+                            <!-- Low Stock Limit Modal -->
+                            <div id="lowStockModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close-btn" onclick="closeLowStockModal()">&times;</span>
+                                    <form class="inventory-form" id="lowStockForm" method="POST" action="/set_low_stock_limit">
+                                        <h3>SET LOW STOCK LIMIT</h3>
+                                        <input type="hidden" name="id" id="low-stock-id">
+                                        <input type="number" name="low_stock_limit" id="low-stock-limit" placeholder="Enter low stock threshold" required>
+                                        <button class="inventory-button-process" type="submit">Save Limit</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="accounts" class="section">
+                    
+                    <div class="accounts-container">
+                        <!-- Modal Form -->
+                        <div id="addCashierModal" class="modal" style="display: none;">
+                        <div class="cashier-modal-content">
+                            <span class="close" id="closeModal">&times;</span>
+                            <h2>Add Cashier Account</h2>
+                            <form id="addCashierForm">
+                            <input type="text" name="username" placeholder="Username" required><br>
+                            <input type="password" name="password" placeholder="Password" required><br>
+                            <input type="text" name="role" placeholder="Role" required><br>
+                            <input type="text" name="name" placeholder="Full Name" required><br>
+                            <input type="text" name="gender" placeholder="Gender" required><br>
+                            <input type="number" name="age" placeholder="Age" required><br>
+                            <input type="text" name="address" placeholder="Address" required><br>
+                            <input type="date" name="birthdate" required><br>
+                            <input type="text" name="contact_no" placeholder="Contact Number" required><br>
+                            <button class="cashier-button" type="submit">Add Cashier</button>
+                            </form>
+                        </div>
+                        </div>
+
+                        <!-- Edit Cashier Modal -->
+                        <div id="editCashierModal" class="modal" style="display: none;">
+                            <div class="cashier-modal-content">
+                            <span class="close" id="closeEditModal">&times;</span>
+                            <h2>Edit Cashier Account</h2>
+                            <form id="editCashierForm">
+                                <input type="hidden" name="original_username">
+                                <input type="text" name="username" placeholder="Username" required><br>
+                                <input type="password" name="password" placeholder="Password" required><br>
+                                <input type="text" name="role" placeholder="Role" required><br>
+                                <input type="text" name="name" placeholder="Full Name" required><br>
+                                <input type="text" name="gender" placeholder="Gender" required><br>
+                                <input type="number" name="age" placeholder="Age" required><br>
+                                <input type="text" name="address" placeholder="Address" required><br>
+                                <input type="date" name="birthdate" required><br>
+                                <input type="text" name="contact_no" placeholder="Contact Number" required><br>
+                                <button class="cashier-button" type="submit">Save Changes</button>
+                            </form>
+                            </div>
+                        </div>
+    
+                        <button id="openModalBtn">Add Cashier</button>
+                        <table id="accounts_table">
+                            <thead>
+                                <tr>
+                                    <th>Employee Name</th>
+                                    <th>Gender</th>
+                                    <th>Age</th>
+                                    <th>Address</th>
+                                    <th>Contact No.</th>
+                                    <th>Username</th>
+                                    <th>Password</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Records will be inserted here dynamically -->
+                            </tbody>
+                        </table>                    
+                    </div>
+                </div>
+
+                <div id="sales" class="section">
+                    <div class="sales-container">
+                        <nav class="sales-sidebar">
+                            <button id="daily-btn">Daily Sales</button>
+                            <button id="weekly-btn">Weekly Sales</button>
+                            <button id="monthly-btn">Monthly Sales</button>
+                            <button id="yearly-btn">Yearly Sales</button>
+                        </nav>
+                        <div class="sales-main-content">
+                            <div id="sales-table">
+                                <p>Loading sales data...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="sales-history" class="section">
+                    <div class="sales-history-container">  
+                        <div class="history-panel"> 
+                            <div class="panel-header">
+                
+                                <input 
+                                    type="text" 
+                                    id="searchInput" 
+                                    class="history-search-bar" 
+                                    placeholder="Search by Reference Number..."
+                                    oninput="filterOrders()" 
+                                >
+                
+                                <input 
+                                    type="date" 
+                                    id="dateFilter" 
+                                    class="date-filter"
+                                    onchange="filterOrders()" 
+                                >
+                            </div>
+                        
+                            <div class="sales-history-items" id="orderList">
+                                <!-- Order items will be populated here dynamically -->
+                            </div>
+                        </div> 
+                    </div>
+                
+                    <div id="receiptModal" class="modal">
+                        <div class="modal-content">
+                            <span class="close-button" id="closeHistoryModal">&times;</span>
+                            <div id="modalReceiptContent">
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="working-log" class="section">
+                    <div class="work-tracker-container">
+                    <table id="work-log-table">
+                        <thead>
+                            <tr>
+                                <th>Employee Name</th>
+                                <th>Date</th>
+                                <th>Time In</th>
+                                <th>Time Out</th>
+                                <th>Total Sales</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Records will be inserted here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+  <script src="{{ url_for('static', filename='scripts.js') }}"></script>  
+  <script>
+    let profitChart;
+    
+    async function loadDashboardData(type) {
+        try {
+            const response = await fetch(`/api/sales/${type}`);
+            const salesData = await response.json();
+    
+            if (!Array.isArray(salesData) || salesData.length === 0) {
+                document.getElementById("totalSales").textContent = "0.00";
+                document.getElementById("totalMarket").textContent = "0.00";
+                document.getElementById("totalProfit").textContent = "0.00";
+                renderProfitChart([], [], [], []);
+                return;
+            }
+    
+            let labels = [];
+            let shopTotals = [];
+            let marketTotals = [];
+            let profitTotals = [];
+    
+            let totalShop = 0;
+            let totalMarket = 0;
+    
+            for (const sale of salesData) {
+                const shop = parseFloat(sale.total_shop_price);
+                const market = parseFloat(sale.total_market_price ?? 0);
+                const profit = shop - market;
+    
+                labels.push(sale.date);
+                shopTotals.push(shop);
+                marketTotals.push(market);
+                profitTotals.push(profit);
+    
+                totalShop += shop;
+                totalMarket += market;
+            }
+    
+            const totalProfit = totalShop - totalMarket;
+    
+            document.getElementById("totalSales").textContent = totalShop.toFixed(2);
+            document.getElementById("totalMarket").textContent = totalMarket.toFixed(2);
+            document.getElementById("totalProfit").textContent = totalProfit.toFixed(2);
+    
+            renderProfitChart(labels, profitTotals, shopTotals, marketTotals);
+        } catch (error) {
+            console.error("Dashboard fetch error:", error);
+        }
+    }
+    
+    function renderProfitChart(labels, profitData, shopData, marketData) {
+        const ctx = document.getElementById('profitChart').getContext('2d');
+        if (profitChart) profitChart.destroy();
+    
+        profitChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Profit',
+                        data: profitData,
+                        borderColor: '#4CAF50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Total Sales',
+                        data: shopData,
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.2)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Total Market Price',
+                        data: marketData,
+                        borderColor: '#F44336',
+                        backgroundColor: 'rgba(244, 67, 54, 0.2)',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ₱${context.raw.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '₱'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => loadDashboardData("daily"));
+
+    function fetchLowStockProducts() {
+        fetch('/low_stock_products')
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('lowStockList');
+                list.innerHTML = ''; // Clear old list
+                if (data.length === 0) {
+                    list.innerHTML = '<li>All stock levels are okay.</li>';
+                } else {
+                    data.forEach(product => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>${product.name}</strong> <span class="quantity">${product.quantity} left</span>`;  // Bold name and float quantity
+                        list.appendChild(li);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching low stock products:', error);
+            });
+    }
+
+    fetchLowStockProducts();
+
+    setInterval(fetchLowStockProducts, 3000);
+    </script>
+</body>
+</html>
